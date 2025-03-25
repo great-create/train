@@ -1,0 +1,52 @@
+將檔案input.txt讀入，把input檔案的內容複製到檔案output.txt兩次，
+
+程式中能使用到的變數型態：
+
+FILE *
+
+char
+
+請善用檔案處理的相關凾式來完成這個題目
+
+Read file A, then copy the content in file A to file B two times.
+
+Variable types which can use:
+
+FILE *
+
+char
+
+Use function relate to file process to finish this problem.
+
+
+Input (From File: input.txt)
+
+檔案內容包含一段文字。
+
+There are sentences in the file.
+
+
+Output (To File: output.txt)
+
+將一段文字存入輸出的檔案兩次，並用換行分隔。
+
+Save the sentences into the output file twice, separated by enter line.
+
+
+Sample Input 1 
+
+Today is Yang Qiao-Ru's birthday.
+Sample Output 1
+
+Today is Yang Qiao-Ru's birthday.
+Today is Yang Qiao-Ru's birthday.
+Sample Input 2 
+
+: What day is today?
+: "To"
+Sample Output 2
+
+: What day is today?
+: "To"
+: What day is today?
+: "To"
