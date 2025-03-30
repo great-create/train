@@ -1,52 +1,31 @@
-將檔案input.txt讀入，把input檔案的內容複製到檔案output.txt兩次，
+請用 SIC/XE 的指令集寫一組合語言程式，在 Device ‘F2’ 中印出如下的 9x9 乘法表，請滿足以下要求：(請於 3/16 23:55 前繳交）
 
-程式中能使用到的變數型態：
+寫出印一個數字（Register A 的值）的副程式 50 分
+以雙迴圈的方式來列印，滿分最高 90 分
+你的輸出結果需要對齊，對齊 100 分
+Using SIC/XE assembly language to write a program which generates the following 9x9 multiplication table on device F2. Your program has to satisfy the following criteria: （Please upload your program before  23:55, 16 Mar.）
 
-FILE *
+Use subroutine to print a number in register A. (up to 50 points)
+Print the 9x9 multiplication table with double loop. (up to 90 points)
+The printed output needs to be aligned. (up to 100 points)
+ 
 
-char
+   1   2   3    4    5    6   7   8   9
 
-請善用檔案處理的相關凾式來完成這個題目
+1  1   2   3    4    5    6   7   8   9
 
-Read file A, then copy the content in file A to file B two times.
+2  2   4   6    8  10 12 14 16 18
 
-Variable types which can use:
+3  3   6   9  12 15 18 21 24 27
 
-FILE *
+4  4   8  12 16 20 24 28 32 36
 
-char
+5  5  10 15 20 25 30 35 40 45
 
-Use function relate to file process to finish this problem.
+6  6  12 18 24 30 36 42 48 54
 
+7  7  14 21 28 35 42 49 56 63
 
-Input (From File: input.txt)
+8  8  16 24 32 40 48 56 64 72
 
-檔案內容包含一段文字。
-
-There are sentences in the file.
-
-
-Output (To File: output.txt)
-
-將一段文字存入輸出的檔案兩次，並用換行分隔。
-
-Save the sentences into the output file twice, separated by enter line.
-
-
-Sample Input 1 
-
-Today is Yang Qiao-Ru's birthday.
-Sample Output 1
-
-Today is Yang Qiao-Ru's birthday.
-Today is Yang Qiao-Ru's birthday.
-Sample Input 2 
-
-: What day is today?
-: "To"
-Sample Output 2
-
-: What day is today?
-: "To"
-: What day is today?
-: "To"
+9  9  18 27 36 45 54 63 72 81
