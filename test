@@ -1,3 +1,5 @@
+https://deitel.com/c-how-to-program-8-e/
+https://github.com/pdeitel/CHowToProgram8e
 MULT9X9  START  0
          LDX    #0          X寄存器用于外循环，从0开始
 LOOPI    LDA    #1          A寄存器用于计数，从1开始
