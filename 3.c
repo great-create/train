@@ -1,3 +1,27 @@
+/*從 "input.txt" 讀取數據，解析數字與字母的組合，並根據數字重複對應字母，最後將結果輸出到 "output.txt"。
+
+
+Input (From File: input.txt)
+
+"input.txt" 中包含多筆測資，每筆測資為一串數字與字母的組合，例如：1T2A3B。
+
+每筆測資可能有多組數字與字母的組合，檔案以換行符號區分不同測資。
+
+
+Output (To File: output.txt)
+
+解析後的結果輸出至 "output.txt"，每筆測資結果應獨立成一行，例如：TAABBB。
+
+
+Sample Input 1 
+
+1T2A3b
+3X1Y2Z
+Sample Output 1
+
+TAAbbb
+XXXYZZ*/
+
 /*將電話號碼切割成字符
 Description
 
