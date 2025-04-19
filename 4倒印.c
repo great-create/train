@@ -1,82 +1,36 @@
-/*倒印字串
-Description
+      START 1000
+I     BYTE 1               ; 初始 i=1
+J     BYTE 1               ; 初始 j=1
+RESULT WORD ?              ; 儲存乘積結果
+TEXTBUF RESB 40            ; 暫存輸出文字
 
-請撰寫一個遞迴函式stringReverse，請依題目指示命名，若無則不予計分。
-它的引數為一個字元陣列，將此陣列倒過來列印，沒有回傳值。
-這個函式應在遇到字串的【結束空字元】時，停止處理並返回。
-程式可重複輸入，直到字串判斷為空，則停止該程式。
+      LDA I                ; A = I
+      COMP =X'09'          ; 比較是否到9
+      JGT ENDPROG          ; 若 >9，跳到結束
 
-(Print a String Backward) Write a recursive functionstringReversethat takes a character array as an argument, prints it back to front and returns nothing.
-The function should stop processing and return when the terminating null character of the string is encountered.
+LOOPI LDA I                ; A = I
+      STA TEMP_I           ; 儲存 I 到暫存變數
+      LDB =1               ; B = j = 1
 
+LOOPJ LDA TEMP_I           ; A = I
+      MUL B                ; A = I * J
+      STA RESULT           ; 存入 RESULT
 
-Input
+* 若要輸出，可在模擬器中定義輸出例程，如 DUMP RESULT
+* 模擬器可顯示 RESULT 的值
 
-輸入一個字串
+      ADD B, =1            ; j++
+      COMP B, =9
+      JGT NEXTI
+      J     LOOPJ
 
-Input a string.
+NEXTI LDA I
+      ADD A, =1            ; i++
+      STA I
+      J     LOOPI
 
+ENDPROG
+      RSUB
 
-Output
-
-印出反轉後的字。
-
-Output the reversed string.
-
-
-Sample Input 1 
-
-Hello
-abc def
-Sample Output 1
-
-olleH
-fed cba
-Language: 
-*/#include <stdio.h>
-#include <string.h>
-#define SIZE 20
-void stringReverse(char c[]);
-
-int main() {
-    
-    char num[SIZE];  
-    
-/*此程式會變成逐字串，找空字元。但考試時，是輸入兩三段以上字串，看程式是否正確while(1){
-    fgets(num, sizeof(num), stdin);
-        
-    
-    // 移除換行符號
-    num[strcspn(num, "\n")] = '\0';
-        
-    if (num[0] == '\0') {
-        break;
-        }
-
-        
-    stringReverse(num); 
-    printf("\n");
-    }*/    
-    while(fgets(num, sizeof(num), stdin)){
-    
-        
-    
-        // 移除換行符號
-        num[strcspn(num, "\n")] = '\0';
-        
-        
-        
-        stringReverse(num); 
-     	printf("\n");
-    }
-    return 0;
-}
-
-void stringReverse(char c[]){
-    if (*c == '\0') {
-        return;
-    }
-    stringReverse(c + 1);
-    printf("%c", *c);
-    
-}
+TEMP_I  WORD ?
+      END START
