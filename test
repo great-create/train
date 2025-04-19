@@ -108,3 +108,68 @@ The printed output needs to be aligned. (up to 100 points)
 8  8  16 24 32 40 48 56 64 72
 
 9  9  18 27 36 45 54 63 72 81
+
+
+
+
+
+MUL99   START   1000
+        LDX     #1         ; X = 1 (外圈初始 I)
+LOOPI   STX     I
+        LDT     #1         ; T = 1 (內圈初始 J)
+LOOPJ   STT     J
+
+        LDA     I          ; A = I
+        MUL     J          ; A = I * J
+        JSUB    PRINTNUM   ; 印出結果
+
+        LDA     J
+        ADD     ONE
+        COMP    TEN
+        JGT     NEXTI
+        STT     J
+        TIX     TEN
+        JLT     LOOPJ
+
+NEXTI   LDA     I
+        ADD     ONE
+        COMP    TEN
+        JGT     END
+        STX     I
+        TIX     TEN
+        JLT     LOOPI
+
+END     RSUB
+
+;----------------------------------------
+; 副程式：印出 Register A 的值到 Device F2
+; 假設數字 < 100，印兩位數十進位
+PRINTNUM
+        STA     TMP         ; 暫存原值
+        DIV     TEN         ; A = 商，X = 餘數 (十位)
+        STX     REMDR       ; 存十位數字
+
+        ADD     C48         ; A += '0'
+        WD      F2          ; 輸出十位字元
+
+        LDA     TMP
+        MOD     TEN         ; A = 餘數
+        ADD     C48         ; A += '0'
+        WD      F2          ; 輸出個位字元
+
+        LDA     CSPACE
+        WD      F2          ; 空格分隔
+        RSUB
+
+;----------------------------------------
+ONE     WORD    1
+TEN     WORD    10
+I       RESW    1
+J       RESW    1
+TMP     RESW    1
+REMDR   RESW    1
+C48     BYTE    X'30'       ; ASCII '0'
+CSPACE  BYTE    X'20'       ; ASCII 空格
+F2      BYTE    X'F2'
+        END     MUL99
+
