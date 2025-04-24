@@ -1,0 +1,91 @@
+START   1000
+        JSUB    HEADER      ; 印出表頭
+        JSUB    NEWLINE
+        LDA     #1
+        STA     ROW         ; ROW 初始為 1
+
+ROWLP   LDA     ROW
+        WD      OUTDEV     ; 印 ROW 數字
+        LDA     #32
+        WD      OUTDEV     ; 空格
+
+        LDA     #1
+        STA     COL         ; COL 初始為 1
+
+COLLP   LDA     ROW
+        MUL     COL
+        STA     PROD
+
+        JSR     PRINTNUM    ; 印 ROW * COL 的結果
+
+        LDA     #32
+        WD      OUTDEV     ; 空格
+
+        LDA     COL
+        ADD     #1
+        STA     COL
+        COMP    #10
+        JLT     COLLP
+
+        JSUB    NEWLINE
+        LDA     ROW
+        ADD     #1
+        STA     ROW
+        COMP    #10
+        JLT     ROWLP
+
+        RSUB
+
+; --- 印表頭 ---
+HEADER  LDA     #32
+        WD      OUTDEV     ; 左上角空格
+
+        LDA     #1
+        STA     TEMP
+HEADLP  LDA     TEMP
+        WD      OUTDEV     ; 印欄標題 1~9
+        LDA     #32
+        WD      OUTDEV
+        LDA     TEMP
+        ADD     #1
+        STA     TEMP
+        COMP    #10
+        JLT     HEADLP
+        RSUB
+
+; --- 換行 ---
+NEWLINE LDA     #10
+        WD      OUTDEV
+        WD      OUTDEV
+        RSUB
+
+; --- 印兩位數 ---
+PRINTNUM
+        LDA     PROD
+        DIV     #10
+        STA     TENDIGIT
+        LDA     PROD
+        SUB     TENDIGIT
+        MUL     #10
+        SUB     A
+        ADD     #48
+        STA     ONES
+        LDA     TENDIGIT
+        COMP    #0
+        JEQ     ONLYONE
+        ADD     #48
+        WD      OUTDEV     ; 十位數
+ONLYONE LDA     ONES
+        WD      OUTDEV     ; 個位數
+        RSUB
+
+; === 資料區 ===
+OUTDEV  BYTE    X'F2'
+ROW     RESB    1
+COL     RESB    1
+PROD    RESB    3
+TENDIGIT RESB   1
+ONES    RESB    1
+TEMP    RESB    1
+
+        END     1000
