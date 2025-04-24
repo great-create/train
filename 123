@@ -1,25 +1,25 @@
 START   1000
-        JSUB    HEADER      ; 印出表頭
+        JSUB    HEADER      ; 印表頭
         JSUB    NEWLINE
         LDA     #1
-        STA     ROW         ; ROW 初始為 1
+        STA     ROW         ; ROW = 1
 
-ROWLP   LDA     ROW
-        WD      OUTDEV     ; 印 ROW 數字
+ROWLP   LDA     #1
+        STA     COL         ; COL = 1
+
+        LDA     ROW
+        WD      OUTDEV      ; 印 ROW 標籤
         LDA     #32
-        WD      OUTDEV     ; 空格
-
-        LDA     #1
-        STA     COL         ; COL 初始為 1
+        WD      OUTDEV
 
 COLLP   LDA     ROW
         MUL     COL
-        STA     PROD
+        STA     PRODUCT
 
-        JSR     PRINTNUM    ; 印 ROW * COL 的結果
+        JSUB    PRINTNUM
 
         LDA     #32
-        WD      OUTDEV     ; 空格
+        WD      OUTDEV      ; 空格
 
         LDA     COL
         ADD     #1
@@ -36,21 +36,24 @@ COLLP   LDA     ROW
 
         RSUB
 
-; --- 印表頭 ---
+; --- 印表頭列 ---
 HEADER  LDA     #32
-        WD      OUTDEV     ; 左上角空格
+        WD      OUTDEV      ; 左上空格
 
         LDA     #1
         STA     TEMP
+
 HEADLP  LDA     TEMP
-        WD      OUTDEV     ; 印欄標題 1~9
+        WD      OUTDEV
         LDA     #32
         WD      OUTDEV
+
         LDA     TEMP
         ADD     #1
         STA     TEMP
         COMP    #10
         JLT     HEADLP
+
         RSUB
 
 ; --- 換行 ---
@@ -61,31 +64,37 @@ NEWLINE LDA     #10
 
 ; --- 印兩位數 ---
 PRINTNUM
-        LDA     PROD
+        LDA     PRODUCT
         DIV     #10
-        STA     TENDIGIT
-        LDA     PROD
-        SUB     TENDIGIT
+        STA     TENDIGIT     ; 十位數
+
+        LDA     TENDIGIT
         MUL     #10
-        SUB     A
+        STA     TEMP         ; TEMP = 十位數 * 10
+
+        LDA     PRODUCT
+        SUB     TEMP         ; 個位數 = PRODUCT - TEMP
         ADD     #48
         STA     ONES
+
         LDA     TENDIGIT
         COMP    #0
-        JEQ     ONLYONE
+        JEQ     PRINT1DIGIT
         ADD     #48
-        WD      OUTDEV     ; 十位數
-ONLYONE LDA     ONES
-        WD      OUTDEV     ; 個位數
+        WD      OUTDEV       ; 輸出十位數
+
+PRINT1DIGIT
+        LDA     ONES
+        WD      OUTDEV       ; 輸出個位數
         RSUB
 
 ; === 資料區 ===
-OUTDEV  BYTE    X'F2'
-ROW     RESB    1
-COL     RESB    1
-PROD    RESB    3
-TENDIGIT RESB   1
-ONES    RESB    1
-TEMP    RESB    1
+OUTDEV      BYTE    X'F2'
+ROW         RESB    1
+COL         RESB    1
+PRODUCT     RESB    3
+TENDIGIT    RESB    1
+ONES        RESB    1
+TEMP        RESB    3
 
         END     1000
