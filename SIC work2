@@ -1,0 +1,440 @@
+/***********************************************************************/
+/*  Program Name: 4-asm_pass1.c                                        */
+/*  This program implements Pass 1 of a SIC/XE assembler               */
+/*  It builds the SYMTAB and calculates program length                 */
+/*  2025.04.27                                                         */
+/***********************************************************************/
+#include <string.h>
+#include <stdlib.h>
+#include "2-optable.c"
+
+/* Public variables and functions */
+#define ADDR_SIMPLE         0x01
+#define ADDR_IMMEDIATE      0x02
+#define ADDR_INDIRECT       0x04
+#define ADDR_INDEX          0x08
+
+#define LINE_EOF            (-1)
+#define LINE_COMMENT        (-2)
+#define LINE_ERROR          (0)
+#define LINE_CORRECT        (1)
+
+#define MAX_SYMBOLS         1000
+
+typedef struct {
+    char        symbol[LEN_SYMBOL];
+    char        op[LEN_SYMBOL];
+    char        operand1[LEN_SYMBOL];
+    char        operand2[LEN_SYMBOL];
+    unsigned    code;
+    unsigned    fmt;
+    unsigned    addressing;    
+} LINE;
+
+typedef struct {
+    char        symbol[LEN_SYMBOL];
+    unsigned    address;
+} SYMBOL;
+
+/* Symbol table */
+SYMBOL SYMTAB[MAX_SYMBOLS];
+int sym_count = 0;
+
+/* Program variables */
+unsigned LOCCTR = 0;
+unsigned START_ADDR = 0;
+unsigned PROGRAM_LENGTH = 0;
+char PROGRAM_NAME[LEN_SYMBOL] = "";
+char BASE_REGISTER[LEN_SYMBOL] = "";
+
+int process_line(LINE *line);
+/* return LINE_EOF, LINE_COMMENT, LINE_ERROR, LINE_CORRECT and Instruction information in *line*/
+
+int add_symbol(char *symbol, unsigned address);
+int find_symbol(char *symbol);
+int calculate_instruction_length(LINE *line);
+void print_symtab();
+
+/* Private variable and function */
+
+void init_LINE(LINE *line)
+{
+    line->symbol[0] = '\0';
+    line->op[0] = '\0';
+    line->operand1[0] = '\0';
+    line->operand2[0] = '\0';
+    line->code = 0x0;
+    line->fmt = 0x0;
+    line->addressing = ADDR_SIMPLE;
+}
+
+int process_line(LINE *line)
+/* return LINE_EOF, LINE_COMMENT, LINE_ERROR, LINE_CORRECT */
+{
+    char        buf[LEN_SYMBOL];
+    int         c;
+    int         state;
+    int         ret;
+    Instruction *op;
+    
+    c = ASM_token(buf);        /* get the first token of a line */
+    if(c == EOF)
+        return LINE_EOF;
+    else if((c == 1) && (buf[0] == '\n'))    /* blank line */
+        return LINE_COMMENT;
+    else if((c == 1) && (buf[0] == '.'))    /* a comment line */
+    {
+        do
+        {
+            c = ASM_token(buf);
+        } while((c != EOF) && (buf[0] != '\n'));
+        return LINE_COMMENT;
+    }
+    else
+    {
+        init_LINE(line);
+        ret = LINE_ERROR;
+        state = 0;
+        while(state < 8)
+        {
+            switch(state)
+            {
+                case 0:
+                case 1:
+                case 2:
+                    op = is_opcode(buf);
+                    if((state < 2) && (buf[0] == '+'))    /* + */
+                    {
+                        line->fmt = FMT4;
+                        state = 2;
+                    }
+                    else if(op != NULL)    /* INSTRUCTION */
+                    {
+                        strcpy(line->op, op->op);
+                        line->code = op->code;
+                        state = 3;
+                        if(line->fmt != FMT4)
+                        {
+                            line->fmt = op->fmt & (FMT1 | FMT2 | FMT3);
+                        }
+                        else if((line->fmt == FMT4) && ((op->fmt & FMT4) == 0)) /* INSTRUCTION is FMT1 or FMT 2*/
+                        {    /* ERROR 20210326 added */
+                            printf("ERROR at token %s, %s cannot use format 4 \n", buf, buf);
+                            ret = LINE_ERROR;
+                            state = 7;        /* skip following tokens in the line */
+                        }
+                    }
+                    else if(state == 0)    /* SYMBOL */
+                    {
+                        strcpy(line->symbol, buf);
+                        state = 1;
+                    }
+                    else        /* ERROR */
+                    {
+                        printf("ERROR at token %s\n", buf);
+                        ret = LINE_ERROR;
+                        state = 7;        /* skip following tokens in the line */
+                    }
+                    break;    
+                case 3:
+                    if(line->fmt == FMT1 || line->code == 0x4C)    /* no operand needed */
+                    {
+                        if(c == EOF || buf[0] == '\n')
+                        {
+                            ret = LINE_CORRECT;
+                            state = 8;
+                        }
+                        else        /* COMMENT */
+                        {
+                            ret = LINE_CORRECT;
+                            state = 7;
+                        }
+                    }
+                    else
+                    {
+                        if(c == EOF || buf[0] == '\n')
+                        {
+                            ret = LINE_ERROR;
+                            state = 8;
+                        }
+                        else if(buf[0] == '@' || buf[0] == '#')
+                        {
+                            line->addressing = (buf[0] == '#') ? ADDR_IMMEDIATE : ADDR_INDIRECT;
+                            state = 4;
+                        }
+                        else    /* get a symbol */
+                        {
+                            op = is_opcode(buf);
+                            if(op != NULL)
+                            {
+                                printf("Operand1 cannot be a reserved word\n");
+                                ret = LINE_ERROR;
+                                state = 7;     /* skip following tokens in the line */
+                            }
+                            else
+                            {
+                                strcpy(line->operand1, buf);
+                                state = 5;
+                            }
+                        }
+                    }            
+                    break;        
+                case 4:
+                    op = is_opcode(buf);
+                    if(op != NULL)
+                    {
+                        printf("Operand1 cannot be a reserved word\n");
+                        ret = LINE_ERROR;
+                        state = 7;        /* skip following tokens in the line */
+                    }
+                    else
+                    {
+                        strcpy(line->operand1, buf);
+                        state = 5;
+                    }
+                    break;
+                case 5:
+                    if(c == EOF || buf[0] == '\n')
+                    {
+                        ret = LINE_CORRECT;
+                        state = 8;
+                    }
+                    else if(buf[0] == ',')
+                    {
+                        state = 6;
+                    }
+                    else    /* COMMENT */
+                    {
+                        ret = LINE_CORRECT;
+                        state = 7;        /* skip following tokens in the line */
+                    }
+                    break;
+                case 6:
+                    if(c == EOF || buf[0] == '\n')
+                    {
+                        ret = LINE_ERROR;
+                        state = 8;
+                    }
+                    else    /* get a symbol */
+                    {
+                        op = is_opcode(buf);
+                        if(op != NULL)
+                        {
+                            printf("Operand2 cannot be a reserved word\n");
+                            ret = LINE_ERROR;
+                            state = 7;        /* skip following tokens in the line */
+                        }
+                        else
+                        {
+                            if(line->fmt == FMT2)
+                            {
+                                strcpy(line->operand2, buf);
+                                ret = LINE_CORRECT;
+                                state = 7;
+                            }
+                            else if((c == 1) && (buf[0] == 'x' || buf[0] == 'X'))
+                            {
+                                line->addressing = line->addressing | ADDR_INDEX;
+                                ret = LINE_CORRECT;
+                                state = 7;        /* skip following tokens in the line */
+                            }
+                            else
+                            {
+                                printf("Operand2 exists only if format 2 is used\n");
+                                ret = LINE_ERROR;
+                                state = 7;        /* skip following tokens in the line */
+                            }
+                        }
+                    }
+                    break;
+                case 7:    /* skip tokens until '\n' || EOF */
+                    if(c == EOF || buf[0] =='\n')
+                        state = 8;
+                    break;                                        
+            }
+            if(state < 8)
+                c = ASM_token(buf);  /* get the next token */
+        }
+        return ret;
+    }
+}
+
+/* Calculate the length of an instruction based on its format */
+int calculate_instruction_length(LINE *line) {
+    if (line->fmt == FMT1) {
+        return 1;
+    } else if (line->fmt == FMT2) {
+        return 2;
+    } else if (line->fmt == FMT3) {
+        return 3;
+    } else if (line->fmt == FMT4) {
+        return 4;
+    } else {
+        /* Handle directives */
+        if (strcmp(line->op, "BYTE") == 0) {
+            /* BYTE - Calculate based on operand content */
+            if (line->operand1[0] == 'C') {
+                /* Character constant - each character is 1 byte */
+                int len = 0;
+                char *p = line->operand1 + 2; /* Skip 'C' and "'" */
+                while (*p != '\'' && *p != '\0') {
+                    len++;
+                    p++;
+                }
+                return len;
+            } else if (line->operand1[0] == 'X') {
+                /* Hex constant - each pair of hex digits is 1 byte */
+                int len = 0;
+                char *p = line->operand1 + 2; /* Skip 'X' and "'" */
+                while (*p != '\'' && *p != '\0') {
+                    len++;
+                    p++;
+                }
+                return len / 2 + (len % 2); /* Round up for odd number of digits */
+            }
+        } else if (strcmp(line->op, "WORD") == 0) {
+            /* WORD directive is 3 bytes */
+            return 3;
+        } else if (strcmp(line->op, "RESB") == 0) {
+            /* RESB - Reserve n bytes */
+            return atoi(line->operand1);
+        } else if (strcmp(line->op, "RESW") == 0) {
+            /* RESW - Reserve n words (1 word = 3 bytes) */
+            return 3 * atoi(line->operand1);
+        }
+    }
+    return 0; /* For directives like START, END, BASE, etc. */
+}
+
+/* Add a symbol to the symbol table */
+int add_symbol(char *symbol, unsigned address) {
+    if (sym_count >= MAX_SYMBOLS) {
+        return 0; /* Symbol table is full */
+    }
+    
+    /* Check if symbol already exists */
+    if (find_symbol(symbol) != -1) {
+        return 0; /* Symbol already exists */
+    }
+    
+    strcpy(SYMTAB[sym_count].symbol, symbol);
+    SYMTAB[sym_count].address = address;
+    sym_count++;
+    return 1;
+}
+
+/* Find a symbol in the symbol table */
+int find_symbol(char *symbol) {
+    for (int i = 0; i < sym_count; i++) {
+        if (strcmp(SYMTAB[i].symbol, symbol) == 0) {
+            return i;
+        }
+    }
+    return -1; /* Symbol not found */
+}
+
+/* Print the symbol table */
+void print_symtab() {
+    printf("\nSymbol Table:\n");
+    for (int i = 0; i < sym_count; i++) {
+        printf("    %s : %06X\n", SYMTAB[i].symbol, SYMTAB[i].address);
+    }
+}
+
+/* Compare function for qsort */
+int compare_symbols(const void *a, const void *b) {
+    return strcmp(((SYMBOL*)a)->symbol, ((SYMBOL*)b)->symbol);
+}
+
+int main(int argc, char *argv[]) {
+    int line_count;
+    int result;
+    LINE line;
+
+    if (argc < 2) {
+        printf("Usage: %s fname.asm\n", argv[0]);
+        return 1;
+    }
+
+    if (ASM_open(argv[1]) == NULL) {
+        printf("File not found!!\n");
+        return 1;
+    }
+
+    /* First line should be START directive */
+    result = process_line(&line);
+    if (result == LINE_CORRECT) {
+        if (strcmp(line.op, "START") == 0) {
+            /* Set starting address */
+            START_ADDR = strtol(line.operand1, NULL, 16);
+            LOCCTR = START_ADDR;
+            
+            /* Save program name if provided */
+            if (strlen(line.symbol) > 0) {
+                strcpy(PROGRAM_NAME, line.symbol);
+            }
+            
+            /* Print first line */
+            printf("%06X  %-8s %-8s %-8s\n", LOCCTR, line.symbol, line.op, line.operand1);
+        } else {
+            /* If no START directive, assume starting at address 0 */
+            LOCCTR = 0;
+        }
+    }
+
+    /* Process remaining lines (Pass 1) */
+    for (line_count = 2; (result = process_line(&line)) != LINE_EOF; line_count++) {
+        if (result == LINE_CORRECT) {
+            /* Store symbol in symbol table if present */
+            if (strlen(line.symbol) > 0) {
+                add_symbol(line.symbol, LOCCTR);
+            }
+            
+            /* Print current line */
+            printf("%06X  %-8s %-8s %-8s", LOCCTR, line.symbol, line.op, line.operand1);
+            if (strlen(line.operand2) > 0) {
+                printf(",%-8s", line.operand2);
+            }
+            printf("\n");
+            
+            /* Handle BASE directive */
+            if (strcmp(line.op, "BASE") == 0) {
+                strcpy(BASE_REGISTER, line.operand1);
+            }
+            /* Handle END directive */
+            else if (strcmp(line.op, "END") == 0) {
+                /* End of program */
+                PROGRAM_LENGTH = LOCCTR - START_ADDR;
+                break;
+            }
+            /* Regular instruction or directive */
+            else {
+                /* Increase LOCCTR by instruction length */
+                LOCCTR += calculate_instruction_length(&line);
+            }
+        } else if (result == LINE_COMMENT) {
+            /* Print comment line (optional) */
+            printf("       . Comment line\n");
+        } else if (result == LINE_ERROR) {
+            /* Print error line */
+            printf("       ERROR in line %d\n", line_count);
+        }
+    }
+
+    /* If no END directive encountered, calculate program length */
+    if (PROGRAM_LENGTH == 0) {
+        PROGRAM_LENGTH = LOCCTR - START_ADDR;
+    }
+
+    /* Print program length */
+    printf("\nProgram length = %X\n", PROGRAM_LENGTH);
+    
+    /* Sort symbol table alphabetically */
+    qsort(SYMTAB, sym_count, sizeof(SYMBOL), compare_symbols);
+    
+    /* Print symbol table */
+    print_symtab();
+    
+    ASM_close();
+    return 0;
+}
