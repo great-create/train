@@ -1,0 +1,169 @@
+/***********************************************************************
+ *  Program Name: 3-asm_pass1_u.c
+ *  This program is part of SIC/XE assembler Pass 1.  It builds the SYMTAB,
+ *  calculates LOCCTR for each line, outputs a listing with LOCCTR, and
+ *  prints the program length and the symbol table at the end.
+ *  Modified to print LOCCTR before each line, program length, and SYMTAB.
+ ***********************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "2-optable.c"    /* Provides lookup() and FMT* definitions */
+
+/* --------------------------------------------------------------------- */
+/* Symbol Table linked-list node */
+typedef struct sym_node {
+    char l[7];                /* Label (up to 6 chars + null) */
+    int  v;                   /* Address value */
+    struct sym_node *next;
+    struct sym_node *prev;
+} symNODE;
+
+static symNODE *symtab = NULL;
+static symNODE *tail   = NULL;
+static int      sym_flag = 1;  /* For initializing head/tail */
+
+/* Insert a new symbol into SYMTAB */
+symNODE* insert_symbol(const char *s, int loc) {
+    if (sym_flag) {
+        /* Initialize head and tail */
+        symtab = (symNODE*)malloc(sizeof(symNODE));
+        tail   = (symNODE*)malloc(sizeof(symNODE));
+        symtab->prev = NULL;
+        symtab->next = tail;
+        tail->prev   = symtab;
+        tail->next   = NULL;
+        strcpy(tail->l, "XXXXXXX");
+        tail->v = 0;
+        sym_flag = 0;
+    }
+    /* Create new node */
+    symNODE *node = (symNODE*)malloc(sizeof(symNODE));
+    strncpy(node->l, s, 6);
+    node->l[6] = '\0';
+    node->v   = loc;
+    node->next = symtab->next;
+    node->prev = symtab;
+    symtab->next->prev = node;
+    symtab->next       = node;
+    return node;
+}
+
+/* Search SYMTAB for symbol s */
+symNODE* search_symbol(const char *s) {
+    symNODE *p = symtab->next;
+    while (p && p != tail) {
+        if (strcmp(p->l, s) == 0)
+            return p;
+        p = p->next;
+    }
+    return NULL;
+}
+
+int main(int argc, char *argv[]) {
+    int c;
+    LINE line;
+    int locctr = 0;
+    int start_addr = 0;
+    int prog_len = 0;
+    int first = 1;
+
+    if (argc < 2) {
+        printf("Usage: %s fname.asm\n", argv[0]);
+        return 1;
+    }
+    if (ASM_open(argv[1]) == NULL) {
+        printf("File not found!!\n");
+        return 1;
+    }
+
+    /* Pass 1: read each line, build SYMTAB, and print listing */
+    while ((c = process_line(&line)) != LINE_EOF) {
+        if (c == LINE_COMMENT) {
+            /* Optionally print comments without LOCCTR */
+            printf("        ;; %s\n", line.op);
+            continue;
+        }
+        if (first) {
+            first = 0;
+            /* Handle START directive */
+            if (strcmp(line.op, "START") == 0) {
+                sscanf(line.operand1, "%X", &start_addr);
+                locctr = start_addr;
+                /* Print first line */
+                printf("%04X    %6s    %-6s    %s\n", locctr,
+                       line.symbol, line.op, line.operand1);
+                /* Insert program name symbol if present */
+                if (line.symbol[0] != '\0')
+                    insert_symbol(line.symbol, locctr);
+                continue;
+            } else {
+                locctr = 0;
+                start_addr = 0;
+            }
+        }
+        /* Save current LOCCTR for printing */
+        int cur_loc = locctr;
+
+        /* If there is a label, insert into SYMTAB */
+        if (line.symbol[0] != '\0') {
+            if (search_symbol(line.symbol)) {
+                fprintf(stderr, "Error: Duplicate symbol '%s'\n", line.symbol);
+            } else {
+                insert_symbol(line.symbol, cur_loc);
+            }
+        }
+        /* Determine LOCCTR increment */
+        if (lookup(line.op) != NULL) {
+            /* Opcode found: use line.fmt to decide size */
+            if      (line.fmt & FMT4) locctr += 4;
+            else if (line.fmt & FMT3) locctr += 3;
+            else if (line.fmt & FMT2) locctr += 2;
+            else if (line.fmt & FMT1) locctr += 1;
+            else                       locctr += 3;
+        } else if (strcmp(line.op, "WORD") == 0) {
+            locctr += 3;
+        } else if (strcmp(line.op, "RESW") == 0) {
+            locctr += 3 * atoi(line.operand1);
+        } else if (strcmp(line.op, "RESB") == 0) {
+            locctr += atoi(line.operand1);
+        } else if (strcmp(line.op, "BYTE") == 0) {
+            /* Compute byte length */
+            int len = 0;
+            if (line.operand1[0] == 'C') {
+                len = strlen(line.operand1) - 3;
+            } else if (line.operand1[0] == 'X') {
+                len = (strlen(line.operand1) - 3) / 2;
+            }
+            locctr += len;
+        } else if (strcmp(line.op, "END") == 0) {
+            /* Print END line and break */
+            printf("%04X    %6s    %-6s    %s\n", cur_loc,
+                   line.symbol, line.op, line.operand1);
+            break;
+        } else {
+            /* Invalid opcode/directive */
+            fprintf(stderr, "Error: Invalid operation '%s'\n", line.op);
+        }
+        /* Print listing line without object code */
+        printf("%04X    %6s    %-6s    %s\n", cur_loc,
+               line.symbol, line.op, line.operand1);
+    }
+
+    ASM_close();
+
+    /* Compute program length */
+    prog_len = locctr - start_addr;
+    printf("\nProgram length = %04X\n", prog_len);
+
+    /* Print Symbol Table */
+    printf("\nSYMTAB:\n");
+    printf("SYMBOL    ADDRESS\n");
+    symNODE *p = symtab->next;
+    while (p && p != tail) {
+        printf("%-7s    %04X\n", p->l, p->v);
+        p = p->next;
+    }
+
+    return 0;
+}
