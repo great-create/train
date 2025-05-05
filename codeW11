@@ -1,0 +1,217 @@
+TEX is a typesetting language developed by Donald Knuth. It takes source text together with a fewtypesetting instructions and produces, one hopes, a beautiful document. Beautiful documents use “and ” to delimit quotations, rather than the mundane " which is what is provided by most keyboards.Keyboards typically do not have an oriented double-quote, but they do have a left-single-quote ` anda right-single-quote '. Check your keyboard now to locate the left-single-quote key ` (sometimescalled the “backquote key”) and the right-single-quote key ' (sometimes called the “apostrophe” or just“quote”). Be careful not to confuse the left-single-quote ` with the “backslash” key \. TEX lets the usertype two left-single-quotes `` to create a left-double-quote “ and two right-single-quotes '' to createa right-double-quote ”. Most typists, however, are accustomed to delimiting their quotations with theun-oriented double-quote ".
+
+If the source contained
+
+"To be or not to be," quoth the bard, "that is the question."
+
+then the typeset document produced by TEX would not contain the desired form:
+
+“To be or not to be,” quoth the bard, “that is the question.”
+
+In order to produce the desired form, the source file must contain the sequence:
+
+``To be or not to be,'' quoth the bard, ``that is the question.''
+
+You are to write a program which converts text containing double-quote (") characters into textthat is identical except that double-quotes have been replaced by the two-character sequences requiredby TEX for delimiting quotations with oriented double-quotes. The double-quote (") characters shouldbe replaced appropriately by either `` if the " opens a quotation and by '' if the " closes a quotation.Notice that the question of nested quotations does not arise: The first " must be replaced by ``, thenext by '', the next by ``, the next by '', the next by ``, the next by '', and so on.
+
+
+Input
+
+Input will consist of several lines of text containing an even number of double-quote (") characters.Input is ended with an end-of-file character.
+
+
+Output
+
+The text must be output exactly as it was input except that:
+
+The first " in each pair is replaced by two ` characters: `` and
+The second " in each pair is replaced by two ' characters: ''.
+
+Sample Input 1 
+
+"To be or not to be," quoth the Bard, "that
+is the question".
+The programming contestant replied: "I must disagree.
+To `C' or not to `C', that is The Question!"
+Sample Output 1
+
+``To be or not to be,'' quoth the Bard, ``that
+is the question''.
+The programming contestant replied: ``I must disagree.
+To `C' or not to `C', that is The Question!''
+
+====================
+
+Andy loves his set of wooden trains and railroad tracks. Each day, Daddy has to build a new track for him.
+
+The tracks he likes best form a simple loop with no branches or dead ends, so he can run his trains around and around for hours until it is time for the big crash that destroys the whole construction.
+
+So here is the question: Given a set of track pieces, can you form a simple loop with them, while using up all the pieces?
+
+Each piece of track is described by the connectors at both ends. A standard piece has one “male” and one “female” connector.
+
+But there are also track pieces with two male or two female connectors, as shown in the front right of the picture.
+
+To fit together, each male connector must be connected to a female connector. Unlike real wooden tracks, our pieces are assumed to be flexible, so their length or shape is not an issue here.
+
+However, you may not connect the two ends of the same piece together.
+
+
+Input
+
+Input begins with the number of test cases. Each following line contains one test case.
+
+Each test case consists of a list of between 1 and 50 (inclusive) train track pieces.
+
+A piece is described by two code letters: ‘M’ for male or ‘F’ for female connector. Pieces are separated by space characters.
+
+
+Output
+
+For each test case, output a line containing either ‘LOOP’ or ‘NO LOOP’ to indicate whether or not allthe pieces can be joined into a single loop.
+
+
+Sample Input 1 
+
+4
+MF MF
+FM FF MF MM
+MM       FF
+MF MF MF MF FF
+Sample Output 1
+
+LOOP
+LOOP
+LOOP
+NO LOOP
+
+========{=======
+
+你的任務是創建一個迷宮繪製程序。迷宮將由字母 A-Z、星號（*）和空格組成。
+
+-------------------------------------------------------------------------------
+
+Your mission is to create a maze drawing program. A maze will consist of the alphabetic characters A-Z, *(asterisk), and spaces.
+
+
+Input
+
+你的程式將從輸入文件中獲取迷宮的信息。該文件將包含一系列字符行，你的程式必須解釋這些行以繪製一個迷宮。
+
+迷宮的每一行將由一系列數字和字符描述，其中數字表示該字符將被使用的次數。
+
+如果在字符前面有多個數字，則該字符重複的次數將是該字符前面數字的總和。
+
+小寫字母 'b' 將在輸入文件中用於表示迷宮中的空格。
+
+迷宮中不同行的描述將由驚嘆號（!）或行尾分隔。
+
+不同迷宮的描述將由一個空行分隔。輸入文件將以文件結尾結束。
+
+-------------------------------------------------------------------------------
+
+Your program will get the information for the mazes from the input file. This file will contain lines of characters which your program must interpret to draw a maze.
+
+Each row of the maze will be described by a series of numbers and characters, where the numbers before a character tell how many times that character will be used.
+
+If there are multiple digits in a number before a character, then the number of times to repeat the character is the sum of the digits before that character.
+
+The lowercase letter ‘b’ will be used in the input file to represent spaces in the maze.
+
+The descriptions for different rows in the maze will be separated by an exclamation point (!), or by an end of line.
+
+Descriptions for different mazes will be separated by a blank line. The input file will be terminated by an end of file.
+
+
+Output
+
+對於輸入文件中的每個描述，請根據下面的示例輸出繪製相應的迷宮。
+
+迷宮中的行數或文件中的迷宮數量沒有限制，但是沒有一行會包含超過 132 個字符。在兩個連續的迷宮之間打印一個空行。
+
+祝你玩得開心！
+
+-------------------------------------------------------------------------------
+
+For each description in the input file, draw the corresponding maze as it is shown in the sample output below.
+
+There is no limit to the number of rows in a maze or the number of mazes in a file, though no row will contain more than 132 characters. Print a blank line between two consecutive mazes.
+
+Happy mazing!
+
+
+Sample Input 1 
+
+1T1b5T!1T2b1T1b2T!1T1b1T2b2T!1T3b1T1b1T!3T3b1T!1T3b1T1b1T!5T1*1T
+
+11X21b1X
+4X1b1X
+Sample Output 1
+
+T TTTTT
+T  T TT
+T T  TT
+T   T T
+TTT   T
+T   T T
+TTTTT*T
+
+XX   X
+XXXX X
+Sample Input 2 
+
+1111111111111111111111111111111111111111X
+Sample Output 2
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+=========={======
+
+During his last sabbatical, professor M. A. Ya made a surprising discovery about the old Maya calendar.From an old knotted message, professor discovered that the Maya civilization used a 365 day long year,called Haab, which had 19 months. Each of the first 18 months was 20 days long, and the names of themonths were pop, no, zip, zotz, tzec, xul, yoxkin, mol, chen, yax, zac, ceh, mac, kankin, muan, pax,koyab, cumhu. Instead of having names, the days of the months were denoted by numbers startingfrom 0 to 19. The last month of Haab was called uayet and had 5 days denoted by numbers 0, 1, 2, 3,4. The Maya believed that this month was unlucky, the court of justice was not in session, the tradestopped, people did not even sweep the floor.
+
+For religious purposes, the Maya used another calendar in which the year was called Tzolkin (hollyyear). The year was divided into thirteen periods, each 20 days long. Each day was denoted by a pairconsisting of a number and the name of the day. They used 20 names: imix, ik, akbal, kan, chicchan,cimi, manik, lamat, muluk, ok, chuen, eb, ben, ix, mem, cib, caban, eznab, canac, ahau and 13 numbers;both in cycles.
+
+Notice that each day has an unambiguous description. For example, at the beginning of the yearthe days were described as follows:
+
+1 imix, 2 ik, 3 akbal, 4 kan, 5 chicchan, 6 cimi, 7 manik, 8 lamat, 9 muluk, 10 ok, 11 chuen, 12 eb,13 ben, 1 ix, 2 mem, 3 cib, 4 caban, 5 eznab, 6 canac, 7 ahau, and again in the next period 8 imix, 9ik, 10 akbal...
+
+Years (both Haab and Tzolkin) were denoted by numbers 0, 1, ..., where the number 0 was thebeginning of the world. Thus, the first day was:
+
+Haab: 0. pop 0
+
+Tzolkin: 1 imix 0
+
+Help professor M. A. Ya and write a program for him to convert the dates from the Haab calendarto the Tzolkin calendar.
+
+
+Input
+
+The date in Haab is given in the following format:
+
+NumberOfTheDay. Month Year
+
+The first line of the input file contains the number of the input dates in the file. The next n linescontain n dates in the Haab calendar format, each in separate line. The year is smaller then 5000.
+
+
+Output
+
+The date in Tzolkin should be in the following format:
+
+Number NameOfTheDay Year
+
+The first line of the output file contains the number of the output dates. In the next n lines, thereare dates in the Tzolkin calendar format, in the order corresponding to the input dates.
+
+
+Sample Input 1 
+
+3
+10. zac 0
+0. pop 0
+10. zac 1995
+Sample Output 1
+
+3
+3 chuen 0
+1 imix 0
+9 cimi 2801
