@@ -1,0 +1,49 @@
+
+1. You are to design a counter that produces the following count sequence:
+1, 2, 2, 3, 3, 3, 4, 4, 4, 4, ··· , 15, 15, ··· , 1, 2, 2, etc.
+that is, it produces one 1, two 2’s, three 3’s, and so on, up to fifteen 15’s, after which it starts back with one 1,
+two 2’s, etc.
+You have available a catalog of up counters and down counters, each with data inputs, load, enable, and clear
+inputs, and true and complemented form of each output. Assume that all counter inputs are active high.
+Build a counter that realizes the above sequence by using only two counters from the catalog and no more
+than 10 logic gates (or, nand, nor, and, inverter). (Note: A solution is possible with significantly less than 10
+logic gates.) Your answer should include a clear and neat circuit diagram, and an explanation of how your
+design works.
+
+2. Consider a finite state machine with n states. Suppose a periodic sequence of input symbols is applied to the
+FSM. That is, a sequence of inputs of the form
+(X1 ,X2 , ··· ,Xk ), (X1 ,X2 , ··· ,Xk ), ··· , (X1 ,X2 , ··· ,Xk ) ···
+is applied to the FSM starting in some state.
+a. Prove that the sequence of outputs produced will eventually be periodic.
+b. Using the result of part a. show whether or not an FSM with a single bit input X, and a single bit output
+Z, can be constructed that will produce an output Z = 1 whenever the input sequence has r(r + 1)/2 1’s
+for r =1, 2, 3,..., (i.e. 1, 3, 6, 10,... 1’s). An example input-output behavior of the FSM to be designed is
+as follows:
+Input = 0011001100110
+Output = 0010001000010
+
+3. Construct a state diagram of a machine with one input, and 10 (or fewer) states which produces an output z
+= 1 whenever the last string of five inputs contains exactly 3 1s and the string starts with 2 1s. After each
+string which starts with 2 1s, analysis of the next string will not start until the end this string five, whether it
+produces a 1 or not. For example, the input 11011010 produces an output of 00000000, whereas the input
+10011010 produces 00000001.
+
+4. The following figure shows a rotating disk with two optical sensors, A, and B, that are positioned 90
+degrees apart. Half of the disc is white and the other half is black. A sensor generates a logic 0 when the
+black portion of the disk is underneath, otherwise it generates a logic 1.
+
+You are to design a Mealy type and a Moore type state machine that will determine the direction of rotation
+of the disk. The circuit output should be 0 if it is rotating clockwise, and 1 otherwise. Your answer should
+include the state diagrams, and explanation of the solution. Assume that the surface is sampled more than
+four times per revolution of the disk.
+
+
+5. You have available a catalog of parts including standard logic gates (and, nand, or, xor, inverter, etc.), each
+with a delay of 2ns, and up as well down counters with standard features such as enable, parallel load,
+synchronous clear, etc. You are to design a state machine that divides a 50 MHz clock by 3/2. In other words,
+the input is a 50MHz clock and the output is a 33.33 MHz clock. Assume a 50% duty cycle of the input clock.
+This means that for 1/2 the period it is high and for the remaining half of a period it is low.
+Your solution should include a clear, neat circuit diagram, and timing waveforms of the input and output
+signals showing that the circuit realizes the specification. (Hint: Dividing the clock frequency by 3/2 means
+increasing its period by 3/2. This can be accomplished by decreasing its period by a factor of 2 and then
+increasing it by a factor of 3. Note: the duty cycle of the output clock need not be 50%) 
