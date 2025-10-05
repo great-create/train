@@ -1,0 +1,111 @@
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/random.h>
+
+struct student {
+    char *name;
+    int chinese;
+    int math;
+    int english;
+    struct list_head list;
+};
+
+static LIST_HEAD(student_list);
+
+static int get_rand_0_100(void)
+{
+    unsigned int rnd;
+    get_random_bytes(&rnd, sizeof(rnd));
+    return rnd % 101; /* 0 ~ 100 */
+}
+
+static void print_student(const struct student *s)
+{
+    int total = s->chinese + s->math + s->english;
+    int avg_whole = total / 3;
+    int avg_frac = (total * 100 / 3) % 100; /* two decimal digits */
+    printk(KERN_INFO "Name: %s | Chinese: %d Math: %d English: %d | Total: %d | Avg: %d.%02d\n",
+           s->name, s->chinese, s->math, s->english, total, avg_whole, avg_frac);
+}
+
+/* module init */
+static int __init students_init(void)
+{
+    const char *names[5] = {"Alice", "Bob", "Charlie", "David", "Eve"};
+    int i;
+    struct student *p;
+
+    printk(KERN_INFO "[students_init] loading module\n");
+
+    for (i = 0; i < 5; i++) {
+        p = kmalloc(sizeof(*p), GFP_KERNEL);
+        if (!p) {
+            printk(KERN_ERR "kmalloc student failed\n");
+            goto err_alloc;
+        }
+        /* allocate and copy name */
+        p->name = kmalloc(strlen(names[i]) + 1, GFP_KERNEL);
+        if (!p->name) {
+            printk(KERN_ERR "kmalloc name failed\n");
+            kfree(p);
+            goto err_alloc;
+        }
+        strcpy(p->name, names[i]);
+
+        /* random scores */
+        p->chinese = get_rand_0_100();
+        p->math    = get_rand_0_100();
+        p->english = get_rand_0_100();
+
+        INIT_LIST_HEAD(&p->list);
+        list_add_tail(&p->list, &student_list);
+    }
+
+    /* 正向列印 */
+    printk(KERN_INFO "---- Forward print ----\n");
+    list_for_each_entry(p, &student_list, list) {
+        print_student(p);
+    }
+
+    /* 反向列印 */
+    printk(KERN_INFO "---- Reverse print ----\n");
+    list_for_each_entry_reverse(p, &student_list, list) {
+        print_student(p);
+    }
+
+    return 0;
+
+err_alloc:
+    /* 若中途失敗，釋放已建資料 */
+    list_for_each_entry(p, &student_list, list) {
+        list_del(&p->list);
+        kfree(p->name);
+        kfree(p);
+    }
+    return -ENOMEM;
+}
+
+/* module exit */
+static void __exit students_exit(void)
+{
+    struct student *p, *tmp;
+
+    list_for_each_entry_safe(p, tmp, &student_list, list) {
+        list_del(&p->list);
+        if (p->name)
+            kfree(p->name);
+        kfree(p);
+    }
+    printk(KERN_INFO "[students_exit] removing module\n");
+}
+
+module_init(students_init);
+module_exit(students_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("改自 Student List Exercise");
+MODULE_DESCRIPTION("Lab2 exercise: doubly linked list, random scores, forward & reverse print");
