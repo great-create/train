@@ -1,0 +1,19 @@
+package org.example.events.listeners;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.example.events.OrderEvent;
+import org.example.events.OrderEventListener;
+import org.example.events.OrderStatusChanged;
+
+public class LoggingListener implements OrderEventListener {
+    private static final Logger logger = LogManager.getLogger(LoggingListener.class);
+
+    @Override
+    public void onEvent(OrderEvent event) {
+        if (event instanceof OrderStatusChanged e) {
+            logger.info("[Event] Order {} status {} -> {} (traceId={})",
+                    e.orderId, e.prev, e.next, e.traceId);
+        }
+    }
+}
