@@ -1,0 +1,17 @@
+package org.example.events;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class EventBus {
+    private final List<OrderEventListener> listeners = new CopyOnWriteArrayList<>();
+
+    public void register(OrderEventListener l) { listeners.add(l); }
+    public void unregister(OrderEventListener l) { listeners.remove(l); }
+
+    public void publish(OrderEvent e) {
+        for (OrderEventListener l : listeners) {
+            try { l.onEvent(e); } catch (Throwable ignore) { /* 可在此記錄錯誤 */ }
+        }
+    }
+}
