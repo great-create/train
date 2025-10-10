@@ -1,0 +1,33 @@
+package org.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class ExceptionManager {
+    private static final Logger logger = LogManager.getLogger(ExceptionManager.class);
+    private final Map<Class<? extends Throwable>, AtomicInteger> counters = new ConcurrentHashMap<>();
+
+    public void record(Throwable t) {
+        counters.computeIfAbsent(t.getClass(), k -> new AtomicInteger()).incrementAndGet();
+        logger.debug("Recorded exception: {} (total={})",
+                t.getClass().getSimpleName(),
+                counters.get(t.getClass()).get());
+    }
+
+    public Map<Class<? extends Throwable>, AtomicInteger> snapshot() {
+        return Map.copyOf(counters);
+    }
+
+    public void logSummary() {
+        logger.info("=== Exception Summary ===");
+        if (counters.isEmpty()) {
+            logger.info("No exceptions recorded.");
+            return;
+        }
+        counters.forEach((k, v) -> logger.info("{}: {}", k.getSimpleName(), v.get()));
+    }
+}
