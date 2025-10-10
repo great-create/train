@@ -1,0 +1,37 @@
+package org.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.example.events.listeners.DailyReportListener;
+
+import java.time.LocalTime;
+import java.util.Map;
+import java.util.concurrent.*;
+
+public class DailyReportScheduler {
+    private static final Logger logger = LogManager.getLogger(DailyReportScheduler.class);
+
+    private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private final DailyReportListener dailyReportListener;
+    private final ExceptionManager exceptionManager;
+
+    public DailyReportScheduler(DailyReportListener listener, ExceptionManager exceptionManager) {
+        this.dailyReportListener = listener;
+        this.exceptionManager = exceptionManager;
+    }
+
+    public void startAtFixedRate(long initialDelaySeconds, long periodSeconds) {
+        ses.scheduleAtFixedRate(this::emitReport, initialDelaySeconds, periodSeconds, TimeUnit.SECONDS);
+    }
+
+    // 若你想真的每天固定時間（例如 23:59），可以改成計算 now -> 23:59 的 initialDelay，再 period=24h。
+    private void emitReport() {
+        logger.info("===== Daily Report @ {} =====", LocalTime.now());
+        dailyReportListener.snapshot().forEach((status, count) ->
+                logger.info("Status {}: {}", status, count.get()));
+        exceptionManager.logSummary();
+        logger.info("===== End of Daily Report =====");
+    }
+
+    public void shutdown() { ses.shutdownNow(); }
+}
