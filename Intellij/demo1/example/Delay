@@ -1,0 +1,21 @@
+package org.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public final class Delay {
+    private static final Logger logger = LogManager.getLogger(Delay.class);
+
+    private Delay() {}
+
+    public static void ms(long millis, String label) {
+        try {
+            logger.info("Delay start: {} ({} ms)", label, millis);
+            Thread.sleep(millis);
+            logger.info("Delay end  : {}", label);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Delay interrupted: {}", label);
+        }
+    }
+}
