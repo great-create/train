@@ -1,0 +1,17 @@
+<!-- 在 pom.xml 的 <dependencies> 加入 -->
+<properties>
+    <log4j2.version>2.20.0</log4j2.version>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j2.version}</version>
+    </dependency>
+</dependencies>
