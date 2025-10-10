@@ -1,0 +1,18 @@
+package org.example.events;
+
+import org.example.Order;
+import org.example.OrderStatus;
+
+public class OrderStatusChanged implements OrderEvent {
+    public final String orderId;
+    public final String traceId;
+    public final OrderStatus prev;
+    public final OrderStatus next;
+
+    public OrderStatusChanged(Order order, OrderStatus prev, OrderStatus next) {
+        this.orderId = order.getId();
+        this.traceId = order.getTraceId();
+        this.prev = prev;
+        this.next = next;
+    }
+}
