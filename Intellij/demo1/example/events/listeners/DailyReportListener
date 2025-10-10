@@ -1,0 +1,32 @@
+package org.example.events.listeners;
+
+import org.example.OrderStatus;
+import org.example.events.OrderEvent;
+import org.example.events.OrderEventListener;
+import org.example.events.OrderStatusChanged;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class DailyReportListener implements OrderEventListener {
+    private final Map<OrderStatus, AtomicInteger> counters =
+            new EnumMap<>(OrderStatus.class);
+
+    public DailyReportListener() {
+        for (OrderStatus s : OrderStatus.values()) {
+            counters.put(s, new AtomicInteger());
+        }
+    }
+
+    @Override
+    public void onEvent(OrderEvent event) {
+        if (event instanceof OrderStatusChanged e) {
+            counters.get(e.next).incrementAndGet();
+        }
+    }
+
+    public Map<OrderStatus, AtomicInteger> snapshot() {
+        return Map.copyOf(counters);
+    }
+}
