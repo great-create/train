@@ -1,3 +1,4 @@
+/*
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
   <Appenders>
@@ -28,3 +29,39 @@
     </Logger> -->
   </Loggers>
 </Configuration>
+*/
+
+//===new
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <!-- 在這裡把 %X{traceId:-NA} 放進 pattern -->
+      <PatternLayout
+        pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%X{traceId:-NA}] %logger{36} - %msg%n%throwable"/>
+    </Console>
+
+    <RollingFile name="File"
+                 fileName="logs/app.log"
+                 filePattern="logs/app-%d{yyyy-MM-dd}-%i.log.gz">
+      <!-- 檔案輸出也同樣加上 traceId -->
+      <PatternLayout
+        pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%X{traceId:-NA}] %logger{36} - %msg%n%throwable"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="10 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="7"/>
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="File"/>
+    </Root>
+    <!-- 若需要指定某個 package 為 DEBUG，可在此加 Logger 區塊 -->
+  </Loggers>
+</Configuration>
+
+
