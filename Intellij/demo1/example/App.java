@@ -53,11 +53,8 @@ public class App {
         // 4) 示範 Unchecked Exception: 呼叫 pickupOrder(null) 會拋出 InvalidOrderRuntimeException
         try {
             logger.info("---- Start runtime error (null) flow ----");
-            deliveryService.pickupOrder(null); // 會丟出 Unchecked
-        } catch (OrderProcessingException e) {
-            // 不會來到這裡 (pickupOrder 不會丟 checked)，但為了示範捕捉型別混合
-            logger.error("checked handler: {}", e.getMessage());
-        } catch (RuntimeException e) {
+            deliveryService.pickupOrder(null); // 故意傳 null 以測試 Unchecked Exception 行為
+        }  catch (RuntimeException e) {
             logger.error("Caught runtime exception: {}", e.getMessage(), e);
         }
     }
