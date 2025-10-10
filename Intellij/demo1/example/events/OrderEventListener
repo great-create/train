@@ -1,0 +1,5 @@
+package org.example.events;
+
+public interface OrderEventListener {
+    void onEvent(OrderEvent event);
+}
