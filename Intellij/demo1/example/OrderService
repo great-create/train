@@ -1,0 +1,46 @@
+package org.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.example.events.EventBus;
+import org.example.events.OrderStatusChanged;
+
+public class OrderService {
+    private static final Logger logger = LogManager.getLogger(OrderService.class);
+    private final EventBus eventBus;
+
+    public OrderService(EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
+    public void transition(Order order, OrderStatus next) throws OrderProcessingException {
+        ThreadContext.put("traceId", order.getTraceId());
+        try {
+            OrderStatus prev = order.getStatus();
+            if (!prev.canTransitionTo(next)) {
+                throw new OrderProcessingException("Illegal transition: " + prev + " -> " + next);
+            }
+            order.setStatus(next);
+            logger.info("Order {} status {} -> {}", order.getId(), prev, next);
+            eventBus.publish(new OrderStatusChanged(order, prev, next));
+        } finally {
+            ThreadContext.remove("traceId");
+        }
+    }
+
+    public void cancel(Order order, String reason) throws OrderProcessingException {
+        ThreadContext.put("traceId", order.getTraceId());
+        try {
+            if (order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.CANCELLED) {
+                throw new OrderProcessingException("Cannot cancel from state: " + order.getStatus());
+            }
+            OrderStatus prev = order.getStatus();
+            order.setStatus(OrderStatus.CANCELLED);
+            logger.warn("Order {} cancelled (from={}): {}", order.getId(), prev, reason);
+            eventBus.publish(new OrderStatusChanged(order, prev, OrderStatus.CANCELLED));
+        } finally {
+            ThreadContext.remove("traceId");
+        }
+    }
+}
