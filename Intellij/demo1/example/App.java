@@ -87,8 +87,9 @@ public class App {
         DailyReportScheduler scheduler = new DailyReportScheduler(dailyReportListener, exceptionManager);
         scheduler.startAtFixedRate(5, 15); // 5 秒後開始、每 15 秒一份報告
 
+        // 建構
         OrderService orderService = new OrderService(eventBus);
-        DeliveryService deliveryService = new DeliveryService();
+        DeliveryService deliveryService = new DeliveryService(orderService);
         Restaurant restaurant = new Restaurant("PastaHouse", true);
 
         // 正常流程（含延遲）
@@ -103,7 +104,7 @@ public class App {
             deliveryService.pickupOrder(order1);
             Delay.ms(800, "Delivery"); // 模擬外送 0.8 秒
             deliveryService.deliverOrder(order1);
-            orderService.transition(order1, OrderStatus.DELIVERED);
+            //orderService.transition(order1, OrderStatus.DELIVERED);
         } catch (OrderProcessingException e) {
             logger.error("Business error: {}", e.getMessage(), e);
             exceptionManager.record(e);
