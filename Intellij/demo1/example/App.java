@@ -1,4 +1,4 @@
-package com.example.delivery;
+/*package com.example.delivery;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,5 +57,90 @@ public class App {
         }  catch (RuntimeException e) {
             logger.error("Caught runtime exception: {}", e.getMessage(), e);
         }
+    }
+}
+*/
+
+
+package org.example;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.example.events.EventBus;
+import org.example.events.listeners.DailyReportListener;
+import org.example.events.listeners.LoggingListener;
+
+public class App {
+    private static final Logger logger = LogManager.getLogger(App.class);
+
+    public static void main(String[] args) {
+        ExceptionManager exceptionManager = new ExceptionManager();
+
+        // 事件系統
+        EventBus eventBus = new EventBus();
+        LoggingListener loggingListener = new LoggingListener();
+        DailyReportListener dailyReportListener = new DailyReportListener();
+        eventBus.register(loggingListener);
+        eventBus.register(dailyReportListener);
+
+        // 每日報告（示範：每 15 秒輸出一次）
+        DailyReportScheduler scheduler = new DailyReportScheduler(dailyReportListener, exceptionManager);
+        scheduler.startAtFixedRate(5, 15); // 5 秒後開始、每 15 秒一份報告
+
+        OrderService orderService = new OrderService(eventBus);
+        DeliveryService deliveryService = new DeliveryService();
+        Restaurant restaurant = new Restaurant("PastaHouse", true);
+
+        // 正常流程（含延遲）
+        Order order1 = new Order("Alice", "PastaHouse");
+        try {
+            logger.info("---- NORMAL FLOW ----");
+            restaurant.acceptOrder(order1);
+            orderService.transition(order1, OrderStatus.PREPARING);
+            Delay.ms(1000, "Cooking"); // 模擬製作 1 秒
+            orderService.transition(order1, OrderStatus.READY_FOR_PICKUP);
+
+            deliveryService.pickupOrder(order1);
+            Delay.ms(800, "Delivery"); // 模擬外送 0.8 秒
+            deliveryService.deliverOrder(order1);
+            orderService.transition(order1, OrderStatus.DELIVERED);
+        } catch (OrderProcessingException e) {
+            logger.error("Business error: {}", e.getMessage(), e);
+            exceptionManager.record(e);
+        } catch (RuntimeException e) {
+            logger.error("Runtime error: {}", e.getMessage(), e);
+            exceptionManager.record(e);
+        }
+
+        // 取消案例
+        Order order2 = new Order("Bob", "PastaHouse");
+        try {
+            logger.info("---- CANCEL FLOW ----");
+            restaurant.acceptOrder(order2);
+            orderService.transition(order2, OrderStatus.PREPARING);
+            // 使用者臨時取消
+            orderService.cancel(order2, "Customer changed mind");
+        } catch (OrderProcessingException e) {
+            logger.error("Business error: {}", e.getMessage(), e);
+            exceptionManager.record(e);
+        } catch (RuntimeException e) {
+            logger.error("Runtime error: {}", e.getMessage(), e);
+            exceptionManager.record(e);
+        }
+
+        // 範例：觸發一個 unchecked（看看統計）
+        try {
+            logger.info("---- RUNTIME ERROR EXAMPLE ----");
+            deliveryService.pickupOrder(null); // 會拋 InvalidOrderRuntimeException（依你現有版本）
+        } catch (RuntimeException e) {
+            logger.error("Runtime error: {}", e.getMessage(), e);
+            exceptionManager.record(e);
+        }
+
+        // 為了讓你看到至少一份「每日報告」，暫停幾秒（示範）
+        Delay.ms(20000, "Wait for scheduled report"); // 20 秒
+
+        scheduler.shutdown();
+        logger.info("App finished.");
     }
 }
