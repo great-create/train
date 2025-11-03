@@ -1,5 +1,5 @@
 https://hackmd.io/@nlhsueh/HySQsoBR2/%2FSyGjZQTlkx
 
-(Log4j2 依賴)pom.xml：Intellij/DemoPreventive/pom.xml
+(Log4j2 依賴)pom.xml_<dependencies> .. </dependencies>：Intellij/DemoPreventive/pom.xml
 
-(PMD 外掛)pom.xml:Intellij/DemoInspection/pom.xml
+(PMD 外掛)pom.xml_<build> .. </build>:Intellij/DemoInspection/pom.xml
