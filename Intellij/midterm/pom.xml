@@ -1,43 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.example</groupId>
-  <artifactId>baseball-score-checker</artifactId>
-  <version>1.0.0</version>
+  <artifactId>midterm</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
   <properties>
-    <!-- Java 版本與編碼設定 -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- Log4j2 版本 -->
+    <!-- 關鍵：把你原本沒定義的 log4j2.version 補上 -->
     <log4j2.version>2.20.0</log4j2.version>
   </properties>
 
   <dependencies>
-    <!-- Log4j2 API -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.14.0</version>
+    </dependency>
+
+    <!-- Log4j2（程式內部 builder API 需要 core） -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
-
-    <!-- Log4j2 Core -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
-
-    <!-- SLF4J 橋接（可留著，非 optional） -->
+    <!-- 若有程式或第三方走 SLF4J，導到 Log4j2 -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j2-impl</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <!-- PMD：用內建規則，避免額外 rule_set.xml -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.25.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>category/java/bestpractices.xml</ruleset>
+            <ruleset>category/java/errorprone.xml</ruleset>
+            <ruleset>category/java/codestyle.xml</ruleset>
+          </rulesets>
+          <format>html</format>
+          <failOnViolation>false</failOnViolation>
+          <minimumPriority>3</minimumPriority>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
