@@ -72,3 +72,37 @@
     </plugins>
   </build>
 </project>
+
+
+
+===================
+產 PMD 報告（不新增任何檔）
+
+在 IntelliJ Terminal：
+
+mvn -q -DskipTests verify
+
+
+報告出在：
+
+target/site/pmd.html
+
+
+（若要 CPD 重複碼）：
+
+mvn -q -DskipTests pmd:cpd-check
+
+
+→ target/site/cpd.html
+
+若仍想用 IntelliJ 執行 Maven 而不裝系統版
+
+在 IntelliJ 底部點開 Maven 面板。
+
+在 lifecycle 裡找到 verify。
+
+右鍵點 verify → 「Run Maven Build」。
+
+這樣 IntelliJ 會用內建 Maven 執行：
+
+verify -DskipTests
