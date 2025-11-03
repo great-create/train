@@ -2,18 +2,14 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-  <!-- Maven 版本宣告 -->
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- 專案基本資料 -->
   <groupId>org.example</groupId>
   <artifactId>baseball-score-checker</artifactId>
   <version>1.0.0</version>
 
-  <!-- ===== 編譯與版本屬性 ===== -->
   <properties>
-    <!-- 使用 JDK 17 -->
+    <!-- Java 版本與編碼設定 -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,36 +18,26 @@
     <log4j2.version>2.20.0</log4j2.version>
   </properties>
 
-  <!-- ===== 相依套件 ===== -->
   <dependencies>
-    <!-- Log4j2 API (程式呼叫介面) -->
+    <!-- Log4j2 API -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
 
-    <!-- Log4j2 Core (實作與輸出功能) -->
+    <!-- Log4j2 Core -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
 
-    <!-- SLF4J 框架橋接（可選） -->
+    <!-- SLF4J 橋接（可留著，非 optional） -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j2-impl</artifactId>
       <version>${log4j2.version}</version>
-      <optional>true</optional>
     </dependency>
   </dependencies>
-
-  <!-- ===== 建置設定（可留空或加 PMD / Surefire） ===== -->
-  <build>
-    <plugins>
-      <!-- 這裡先不放任何外掛；之後如要加 PMD 可以再擴充 -->
-    </plugins>
-  </build>
-
 </project>
