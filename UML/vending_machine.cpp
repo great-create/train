@@ -130,19 +130,19 @@ public:
     void depositCoins() {
         cout << "Insert coin (5,10,25) or 0 to stop\n";
         int v;
-
+    
         while (true) {
             cin >> v;
-
+    
             if (cin.fail()) {
                 cin.clear();
                 cin.ignore(10000, '\n');
                 cout << "Invalid coin ignored\n";
                 continue;
             }
-
+    
             if (v == 0) break;
-
+    
             switch (v) {
                 case 5:  coin5++;  totalDeposit += 5; break;
                 case 10: coin10++; totalDeposit += 10; break;
@@ -152,6 +152,7 @@ public:
             }
         }
     }
+
 
 
     /* ===== Button b: Select Product ===== */
