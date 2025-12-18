@@ -101,12 +101,23 @@ public:
     void depositBills() {
         cout << "Insert bill (1,5,10,20) or 0 to stop\n";
         int v;
+
         while (true) {
             cin >> v;
+
+            // ⭐ 關鍵修正：處理非整數輸入（如 f）
+            if (cin.fail()) {
+                cin.clear(); // 清除錯誤狀態
+                cin.ignore(10000, '\n'); // 丟掉錯誤輸入
+                cout << "Invalid bill ignored\n";
+                continue;
+            }
+
             if (v == 0) break;
+
             switch (v) {
-                case 1: bill1++; totalDeposit += 100; break;
-                case 5: bill5++; totalDeposit += 500; break;
+                case 1:  bill1++;  totalDeposit += 100; break;
+                case 5:  bill5++;  totalDeposit += 500; break;
                 case 10: bill10++; totalDeposit += 1000; break;
                 case 20: bill20++; totalDeposit += 2000; break;
                 default:
@@ -115,14 +126,25 @@ public:
         }
     }
 
+
     void depositCoins() {
         cout << "Insert coin (5,10,25) or 0 to stop\n";
         int v;
+
         while (true) {
             cin >> v;
+
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(10000, '\n');
+                cout << "Invalid coin ignored\n";
+                continue;
+            }
+
             if (v == 0) break;
+
             switch (v) {
-                case 5: coin5++; totalDeposit += 5; break;
+                case 5:  coin5++;  totalDeposit += 5; break;
                 case 10: coin10++; totalDeposit += 10; break;
                 case 25: coin25++; totalDeposit += 25; break;
                 default:
@@ -130,6 +152,7 @@ public:
             }
         }
     }
+
 
     /* ===== Button b: Select Product ===== */
     void selectProduct() {
