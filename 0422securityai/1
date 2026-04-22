@@ -12,3 +12,12 @@ python export_model_arch.py
 python -m pip uninstall torch -y
 python -m pip uninstall torchvision -y
 python -m pip uninstall torchaudio -y
+
+python -m pip install --upgrade pip setuptools wheel
+
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+python -m pip install torchinfo onnx netron
+python -m pip install torchviz
+
+python -c "import torch; print(torch.__version__); print(torch.rand(2,3))"
