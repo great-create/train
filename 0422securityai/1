@@ -1,3 +1,7 @@
+Remove-Item -Recurse -Force venv
+
+
+
 1.
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 venv\Scripts\activate
