@@ -5,3 +5,6 @@ venv\Scripts\activate
 2.
 pip install torch torchinfo onnx netron
 pip install torchviz
+
+pip install torch torchinfo onnx netron
+python export_model_arch.py
