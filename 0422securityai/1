@@ -8,3 +8,7 @@ pip install torchviz
 
 pip install torch torchinfo onnx netron
 python export_model_arch.py
+
+python -m pip uninstall torch -y
+python -m pip uninstall torchvision -y
+python -m pip uninstall torchaudio -y
