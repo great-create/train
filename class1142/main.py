@@ -15,7 +15,6 @@ def main():
     for _ in range(n):
         A.append([int(x) for x in rd().split()])
 
-    # B 不直接存完整矩陣，只存每一列的非 0 元素
     Bnz = []
     for _ in range(n):
         row = rd().split()
@@ -34,13 +33,10 @@ def main():
         for k in rn:
             a = Ai[k]
             if a:
-                bk = Bnz[k]
-                if bk:
-                    for j, b in bk:
-                        Ci[j] += a * b
+                for j, b in Bnz[k]:
+                    Ci[j] += a * b
 
-        line = " ".join(str(x) for x in Ci)
-
+        line = " ".join(map(str, Ci))
         if i + 1 < n:
             wr(line + "\n")
         else:
