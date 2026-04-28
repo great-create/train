@@ -1,172 +1,147 @@
 import sys
 
-def solve():
+sys.set_int_max_str_digits(0)
+sys.setrecursionlimit(200000)
+
+_POW10_CACHE = {}
+
+def fast_dec(n):
+    if n < 10**18:
+        return str(n)
+    hb = n.bit_length() >> 1
+    d = (hb * 30103) // 100000
+    p = _POW10_CACHE.get(d)
+    if p is None:
+        p = 10 ** d
+        _POW10_CACHE[d] = p
+    hi, lo = divmod(n, p)
+    return fast_dec(hi) + str(lo).zfill(d)
+
+def best_threshold(n, L):
+    if L <= 1:
+        return min(n, 32)
+    if L <= 10:
+        return min(n, 8)
+    if L <= 100:
+        return min(n, 4)
+    return min(n, 2)
+
+def add(A, B):
+    return [[x + y for x, y in zip(r1, r2)] for r1, r2 in zip(A, B)]
+
+def sub(A, B):
+    return [[x - y for x, y in zip(r1, r2)] for r1, r2 in zip(A, B)]
+
+def naive(A, B, n):
+    BT = list(zip(*B))
+    return [[sum(x * y for x, y in zip(row, col)) for col in BT] for row in A]
+
+def s2(A, B):
+    a, b = A[0]
+    c, d = A[1]
+    e, f = B[0]
+    g, h = B[1]
+
+    m1 = (a + d) * (e + h)
+    m2 = (c + d) * e
+    m3 = a * (f - h)
+    m4 = d * (g - e)
+    m5 = (a + b) * h
+    m6 = (c - a) * (e + f)
+    m7 = (b - d) * (g + h)
+
+    return [
+        [m1 + m4 - m5 + m7, m3 + m5],
+        [m2 + m4, m1 - m2 + m3 + m6]
+    ]
+
+def split(M, h):
+    top = M[:h]
+    bot = M[h:]
+    return (
+        [r[:h] for r in top],
+        [r[h:] for r in top],
+        [r[:h] for r in bot],
+        [r[h:] for r in bot],
+    )
+
+def merge(M1, M2, M3, M4, M5, M6, M7, h):
+    C11 = [
+        [a + d - e + g for a, d, e, g in zip(r1, r4, r5, r7)]
+        for r1, r4, r5, r7 in zip(M1, M4, M5, M7)
+    ]
+    C12 = add(M3, M5)
+    C21 = add(M2, M4)
+    C22 = [
+        [a - b + c + f for a, b, c, f in zip(r1, r2, r3, r6)]
+        for r1, r2, r3, r6 in zip(M1, M2, M3, M6)
+    ]
+
+    return [C11[i] + C12[i] for i in range(h)] + \
+           [C21[i] + C22[i] for i in range(h)]
+
+def strassen(A, B, n, T):
+    if n == 1:
+        return [[A[0][0] * B[0][0]]]
+
+    if n == 2:
+        return s2(A, B)
+
+    if n <= T:
+        return naive(A, B, n)
+
+    if n & 1:
+        p = n + 1
+        A2 = [row + [0] for row in A] + [[0] * p]
+        B2 = [row + [0] for row in B] + [[0] * p]
+        C2 = strassen(A2, B2, p, T)
+        return [row[:n] for row in C2[:n]]
+
+    h = n >> 1
+
+    A11, A12, A21, A22 = split(A, h)
+    B11, B12, B21, B22 = split(B, h)
+
+    M1 = strassen(add(A11, A22), add(B11, B22), h, T)
+    M2 = strassen(add(A21, A22), B11, h, T)
+    M3 = strassen(A11, sub(B12, B22), h, T)
+    M4 = strassen(A22, sub(B21, B11), h, T)
+    M5 = strassen(add(A11, A12), B22, h, T)
+    M6 = strassen(sub(A21, A11), add(B11, B12), h, T)
+    M7 = strassen(sub(A12, A22), add(B21, B22), h, T)
+
+    return merge(M1, M2, M3, M4, M5, M6, M7, h)
+
+def main():
     data = sys.stdin.buffer.read().split()
-    idx = 0
-    n = int(data[idx]); idx += 1
-    L = int(data[idx]); idx += 1
+    pos = 0
 
-    total = n * n
-    A = [int(data[idx + i]) for i in range(total)]; idx += total
-    B = [int(data[idx + i]) for i in range(total)]
+    n = int(data[pos])
+    pos += 1
+    L = int(data[pos])
+    pos += 1
 
-    # Choose threshold based on n and L to minimize big-int muls
-    # T=1: 7^log2(n) muls (minimum, but lots of recursion overhead)
-    # T=2: 7^(log2(n)-1) * 8 muls
-    # For large L, T=1 or T=2 is best; for small L, higher T is fine
-    if L * n > 16000:
-        T = 1
-    else:
-        T = 32
+    A = []
+    for _ in range(n):
+        A.append([int(data[pos + j]) for j in range(n)])
+        pos += n
 
-    sys.setrecursionlimit(10000)
+    B = []
+    for _ in range(n):
+        B.append([int(data[pos + j]) for j in range(n)])
+        pos += n
 
-    def strassen(X, Y, s, ox_r, ox_c, oy_r, oy_c, sx, sy):
-        """
-        Multiply X[ox_r:ox_r+s, ox_c:ox_c+s] with Y[oy_r:oy_r+s, oy_c:oy_c+s]
-        X is stored flat with stride sx, Y with stride sy.
-        Returns flat s*s result.
-        """
-        if s <= T:
-            # Standard multiply
-            C = [0] * (s * s)
-            for i in range(s):
-                xr = (ox_r + i) * sx + ox_c
-                ci = i * s
-                for k in range(s):
-                    a = X[xr + k]
-                    if not a:
-                        continue
-                    yr = (oy_r + k) * sy + oy_c
-                    for j in range(s):
-                        C[ci + j] += a * Y[yr + j]
-            return C
+    T = best_threshold(n, L)
+    C = strassen(A, B, n, T)
 
-        if s & 1:
-            # Odd size: extract to contiguous arrays first
-            X2 = [0] * (s * s)
-            Y2 = [0] * (s * s)
-            for i in range(s):
-                xr = (ox_r + i) * sx + ox_c
-                yr = (oy_r + i) * sy + oy_c
-                X2[i*s: i*s+s] = X[xr: xr+s]
-                Y2[i*s: i*s+s] = Y[yr: yr+s]
-            return strassen_flat(X2, Y2, s)
-
-        h = s >> 1
-        h2 = h * h
-
-        # Extract 4 submatrices from X and Y
-        def get(M, ro, co, stride):
-            o = [0] * h2
-            for i in range(h):
-                src = (ro + i) * stride + co
-                dst = i * h
-                o[dst: dst+h] = M[src: src+h]
-            return o
-
-        A11 = get(X, ox_r,   ox_c,   sx)
-        A12 = get(X, ox_r,   ox_c+h, sx)
-        A21 = get(X, ox_r+h, ox_c,   sx)
-        A22 = get(X, ox_r+h, ox_c+h, sx)
-        B11 = get(Y, oy_r,   oy_c,   sy)
-        B12 = get(Y, oy_r,   oy_c+h, sy)
-        B21 = get(Y, oy_r+h, oy_c,   sy)
-        B22 = get(Y, oy_r+h, oy_c+h, sy)
-
-        add = [A11[k]+A22[k] for k in range(h2)]
-        bdd = [B11[k]+B22[k] for k in range(h2)]
-        M1 = strassen_flat(add, bdd, h)
-        M2 = strassen_flat([A21[k]+A22[k] for k in range(h2)], B11, h)
-        M3 = strassen_flat(A11, [B12[k]-B22[k] for k in range(h2)], h)
-        M4 = strassen_flat(A22, [B21[k]-B11[k] for k in range(h2)], h)
-        M5 = strassen_flat([A11[k]+A12[k] for k in range(h2)], B22, h)
-        M6 = strassen_flat([A21[k]-A11[k] for k in range(h2)], [B11[k]+B12[k] for k in range(h2)], h)
-        M7 = strassen_flat([A12[k]-A22[k] for k in range(h2)], [B21[k]+B22[k] for k in range(h2)], h)
-
-        C = [0] * (s * s)
-        for i in range(h):
-            row_top = i * s
-            row_bot = (i + h) * s
-            ih = i * h
-            C[row_top:row_top+h]   = [M1[ih+k]+M4[ih+k]-M5[ih+k]+M7[ih+k] for k in range(h)]
-            C[row_top+h:row_top+s] = [M3[ih+k]+M5[ih+k] for k in range(h)]
-            C[row_bot:row_bot+h]   = [M2[ih+k]+M4[ih+k] for k in range(h)]
-            C[row_bot+h:row_bot+s] = [M1[ih+k]-M2[ih+k]+M3[ih+k]+M6[ih+k] for k in range(h)]
-        return C
-
-    def strassen_flat(X, Y, s):
-        """X, Y are flat contiguous s*s arrays."""
-        if s <= T:
-            C = [0] * (s * s)
-            for i in range(s):
-                ins = i * s
-                for k in range(s):
-                    a = X[ins + k]
-                    if not a:
-                        continue
-                    kns = k * s
-                    for j in range(s):
-                        C[ins + j] += a * Y[kns + j]
-            return C
-
-        if s == 1:
-            return [X[0] * Y[0]]
-
-        if s & 1:
-            m = s + 1
-            Xp = [0] * (m * m)
-            Yp = [0] * (m * m)
-            for i in range(s):
-                Xp[i*m: i*m+s] = X[i*s: i*s+s]
-                Yp[i*m: i*m+s] = Y[i*s: i*s+s]
-            Cp = strassen_flat(Xp, Yp, m)
-            C = [0] * (s * s)
-            for i in range(s):
-                C[i*s: i*s+s] = Cp[i*m: i*m+s]
-            return C
-
-        h = s >> 1
-        h2 = h * h
-
-        A11 = [0]*h2; A12 = [0]*h2; A21 = [0]*h2; A22 = [0]*h2
-        B11 = [0]*h2; B12 = [0]*h2; B21 = [0]*h2; B22 = [0]*h2
-        for i in range(h):
-            xs = i*s; xsh = xs+h
-            ys = i*s; ysh = ys+h
-            ih = i*h
-            A11[ih:ih+h] = X[xs:xs+h]
-            A12[ih:ih+h] = X[xsh:xsh+h]
-            A21[ih:ih+h] = X[(i+h)*s:(i+h)*s+h]
-            A22[ih:ih+h] = X[(i+h)*s+h:(i+h)*s+s]
-            B11[ih:ih+h] = Y[ys:ys+h]
-            B12[ih:ih+h] = Y[ysh:ysh+h]
-            B21[ih:ih+h] = Y[(i+h)*s:(i+h)*s+h]
-            B22[ih:ih+h] = Y[(i+h)*s+h:(i+h)*s+s]
-
-        M1 = strassen_flat([A11[k]+A22[k] for k in range(h2)], [B11[k]+B22[k] for k in range(h2)], h)
-        M2 = strassen_flat([A21[k]+A22[k] for k in range(h2)], B11, h)
-        M3 = strassen_flat(A11, [B12[k]-B22[k] for k in range(h2)], h)
-        M4 = strassen_flat(A22, [B21[k]-B11[k] for k in range(h2)], h)
-        M5 = strassen_flat([A11[k]+A12[k] for k in range(h2)], B22, h)
-        M6 = strassen_flat([A21[k]-A11[k] for k in range(h2)], [B11[k]+B12[k] for k in range(h2)], h)
-        M7 = strassen_flat([A12[k]-A22[k] for k in range(h2)], [B21[k]+B22[k] for k in range(h2)], h)
-
-        C = [0] * (s * s)
-        for i in range(h):
-            ih = i * h
-            rt = i * s; rb = (i+h) * s
-            C[rt:rt+h]   = [M1[ih+k]+M4[ih+k]-M5[ih+k]+M7[ih+k] for k in range(h)]
-            C[rt+h:rt+s] = [M3[ih+k]+M5[ih+k] for k in range(h)]
-            C[rb:rb+h]   = [M2[ih+k]+M4[ih+k] for k in range(h)]
-            C[rb+h:rb+s] = [M1[ih+k]-M2[ih+k]+M3[ih+k]+M6[ih+k] for k in range(h)]
-        return C
-
-    result = strassen_flat(A, B, n)
+    out_digits = 2 * L + ((n.bit_length() * 30103) // 100000) + 1
+    to_s = fast_dec if out_digits > 4000 else str
 
     out = []
-    for i in range(n):
-        out.append(' '.join(map(str, result[i*n: i*n+n])))
-    sys.stdout.write('\n'.join(out) + '\n')
+    for row in C:
+        out.append(" ".join(to_s(x) for x in row))
 
-solve()
+    sys.stdout.write("\n".join(out) + "\n")
+
+if __name__ == "__main__":
+    main()
