@@ -3,28 +3,10 @@ import sys
 if hasattr(sys, "set_int_max_str_digits"):
     sys.set_int_max_str_digits(0)
 
-THRESHOLD = 64
+THRESHOLD = 96
 
 
-def zero_matrix(n):
-    return [[0] * n for _ in range(n)]
-
-
-def add(A, B, C, n):
-    for i in range(n):
-        Ai, Bi, Ci = A[i], B[i], C[i]
-        for j in range(n):
-            Ci[j] = Ai[j] + Bi[j]
-
-
-def sub(A, B, C, n):
-    for i in range(n):
-        Ai, Bi, Ci = A[i], B[i], C[i]
-        for j in range(n):
-            Ci[j] = Ai[j] - Bi[j]
-
-
-def standard(A, B, C, n):
+def standard_mul(A, B, C, n):
     BT = list(zip(*B))
     for i in range(n):
         Ai = A[i]
@@ -37,10 +19,19 @@ def standard(A, B, C, n):
             Ci[j] = s
 
 
-def strassen(A, B, C, n):
+def add(A, B, n):
+    return [[A[i][j] + B[i][j] for j in range(n)] for i in range(n)]
+
+
+def sub(A, B, n):
+    return [[A[i][j] - B[i][j] for j in range(n)] for i in range(n)]
+
+
+def strassen(A, B, n):
     if n <= THRESHOLD:
-        standard(A, B, C, n)
-        return
+        C = [[0] * n for _ in range(n)]
+        standard_mul(A, B, C, n)
+        return C
 
     m = n // 2
 
@@ -54,40 +45,15 @@ def strassen(A, B, C, n):
     B21 = [row[:m] for row in B[m:]]
     B22 = [row[m:] for row in B[m:]]
 
-    M1 = zero_matrix(m)
-    M2 = zero_matrix(m)
-    M3 = zero_matrix(m)
-    M4 = zero_matrix(m)
-    M5 = zero_matrix(m)
-    M6 = zero_matrix(m)
-    M7 = zero_matrix(m)
+    M1 = strassen(add(A11, A22, m), add(B11, B22, m), m)
+    M2 = strassen(add(A21, A22, m), B11, m)
+    M3 = strassen(A11, sub(B12, B22, m), m)
+    M4 = strassen(A22, sub(B21, B11, m), m)
+    M5 = strassen(add(A11, A12, m), B22, m)
+    M6 = strassen(sub(A21, A11, m), add(B11, B12, m), m)
+    M7 = strassen(sub(A12, A22, m), add(B21, B22, m), m)
 
-    T1 = zero_matrix(m)
-    T2 = zero_matrix(m)
-
-    add(A11, A22, T1, m)
-    add(B11, B22, T2, m)
-    strassen(T1, T2, M1, m)
-
-    add(A21, A22, T1, m)
-    strassen(T1, B11, M2, m)
-
-    sub(B12, B22, T2, m)
-    strassen(A11, T2, M3, m)
-
-    sub(B21, B11, T2, m)
-    strassen(A22, T2, M4, m)
-
-    add(A11, A12, T1, m)
-    strassen(T1, B22, M5, m)
-
-    sub(A21, A11, T1, m)
-    add(B11, B12, T2, m)
-    strassen(T1, T2, M6, m)
-
-    sub(A12, A22, T1, m)
-    add(B21, B22, T2, m)
-    strassen(T1, T2, M7, m)
+    C = [[0] * n for _ in range(n)]
 
     for i in range(m):
         for j in range(m):
@@ -96,8 +62,10 @@ def strassen(A, B, C, n):
             C[i + m][j] = M2[i][j] + M4[i][j]
             C[i + m][j + m] = M1[i][j] - M2[i][j] + M3[i][j] + M6[i][j]
 
+    return C
 
-def next_power(n):
+
+def next_pow2(n):
     p = 1
     while p < n:
         p <<= 1
@@ -122,21 +90,19 @@ def main():
 
     A = []
     for _ in range(n):
-        A.append([int(x) for x in data[idx:idx+n]])
+        A.append([int(x) for x in data[idx:idx + n]])
         idx += n
 
     B = []
     for _ in range(n):
-        B.append([int(x) for x in data[idx:idx+n]])
+        B.append([int(x) for x in data[idx:idx + n]])
         idx += n
 
-    size = next_power(n)
+    size = next_pow2(n)
     A = pad(A, n, size)
     B = pad(B, n, size)
 
-    C = zero_matrix(size)
-
-    strassen(A, B, C, size)
+    C = strassen(A, B, size)
 
     out = []
     for i in range(n):
