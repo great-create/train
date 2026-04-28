@@ -1,49 +1,54 @@
 import sys
 
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
+
 def main():
     data = sys.stdin.buffer.read().split()
     if not data:
         return
 
-    it = iter(data)
-    n = int(next(it))
-    _L = int(next(it))
+    n = int(data[0])
+    idx = 2
 
-    # 一次轉 int，避免重複字串轉整數
-    A = [[int(next(it)) for _ in range(n)] for _ in range(n)]
-    B = [[int(next(it)) for _ in range(n)] for _ in range(n)]
+    A = []
+    for _ in range(n):
+        row = [int(x) for x in data[idx:idx+n]]
+        A.append(row)
+        idx += n
 
-    # 轉置 B，讓原本 B[k][j] 變成 BT[j][k]
-    # 之後乘法時兩列連續讀取，減少索引成本
-    BT = list(map(list, zip(*B)))
-    del B
+    B = []
+    for _ in range(n):
+        row = [int(x) for x in data[idx:idx+n]]
+        B.append(row)
+        idx += n
 
-    C = []
+    BT = list(zip(*B))
+    del B, data
+
+    out = []
     range_n = range(n)
 
     for i in range_n:
         Ai = A[i]
-        row = []
+        crow = []
 
         for j in range_n:
             Bj = BT[j]
             s = 0
 
-            # local variable + while 比三層 list 索引更省
-            k = 0
-            while k < n:
+            for k in range_n:
                 a = Ai[k]
-                if a:          # 若 A 有 0，可省掉大整數乘法
+                if a:
                     b = Bj[k]
                     if b:
                         s += a * b
-                k += 1
 
-            row.append(str(s))
+            crow.append(str(s))
 
-        C.append(" ".join(row))
+        out.append(" ".join(crow))
 
-    sys.stdout.write("\n".join(C))
+    sys.stdout.write("\n".join(out))
 
 if __name__ == "__main__":
     main()
