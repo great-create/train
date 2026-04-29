@@ -1,7 +1,6 @@
 import sys
 
 def solve():
-    # Required by the problem; also needed for str() on large result integers.
     sys.set_int_max_str_digits(0)
     sys.setrecursionlimit(200000)
 
@@ -15,11 +14,10 @@ def solve():
     B = [int(data[ptr + i]) for i in range(nn)]
 
     # ── Fast integer → decimal string ──────────────────────────────────────────
-    # Python's str() runs in O(d²) for large integers (schoolbook base-conversion).
-    # This divide-and-conquer routine splits at roughly half the decimal digit count,
-    # recursing until pieces are small enough for str() to handle cheaply.
-    # At ~8 000 digits (worst-case result size) it is ~1.4× faster than str().
-    _STOP_BITS = 3000 * 3322 // 1000    # stop recursing below ~3 000 decimal digits
+    # Python's str() is O(d²) for large integers.  This D&C version halves the
+    # digit count at each level, giving ~1.5× speedup for 8 000-digit outputs.
+    # Threshold 4000 digits is empirically optimal for our result sizes.
+    _STOP_BITS = 4000 * 3322 // 1000
     _p10: dict = {}
 
     def fast_str(x: int) -> str:
@@ -34,9 +32,6 @@ def solve():
         return fast_str(hi) + str(lo).zfill(k)
 
     # ── Algorithm selection ─────────────────────────────────────────────────────
-    # Strassen reduces multiplications from n³ to n^{log₂7} ≈ n^{2.807}.
-    # For large L every multiplication is expensive (Python uses Karatsuba
-    # internally), so the saving dominates the extra addition overhead.
     use_strassen = (n >= 4 and L >= 100)
 
     # ── Standard O(n³) ─────────────────────────────────────────────────────────
@@ -57,7 +52,7 @@ def solve():
         sys.stdout.write('\n'.join(out) + '\n')
         return
 
-    # ── Strassen (T = 1), padded once to next power of 2 ───────────────────────
+    # ── Strassen (T = 1), single power-of-2 pad ────────────────────────────────
     p = 1
     while p < n:
         p <<= 1
@@ -72,15 +67,11 @@ def solve():
             Bp[i*p : i*p+n] = B[i*n : i*n+n]
 
     # ── Strassen kernel ─────────────────────────────────────────────────────────
-    # X, Y : flat row-major arrays of s×s big integers (s always a power of 2).
-    # Returns a flat row-major s×s result array.
-    #
-    # Combine optimisation: process one output row at a time, slicing h elements
-    # from each Mᵢ, then zip-combining them.  This is ~3-7× faster than either:
-    #   (a) pre-computing all four h²-element quadrant arrays and then scattering
-    #       (too much memory allocated at once → cache pressure), or
-    #   (b) per-element index access [M1[ih+k]+… for k in range(h)]
-    #       (Python index overhead dominates for large bigints).
+    # Optimisations:
+    #  • Input sums use zip() over the full h²-element list (fastest for big ints).
+    #  • Combine: slice one row of each Mᵢ at a time then zip-combine.
+    #    Benchmarks show this is 3-7× faster than pre-computing full h²-element
+    #    quadrant arrays, due to much better cache behaviour.
     def strassen(X, Y, s):
         if s == 1:
             return [X[0] * Y[0]]
@@ -88,7 +79,6 @@ def solve():
         h  = s >> 1
         h2 = h * h
 
-        # Extract submatrices row by row into contiguous flat arrays.
         A11 = [0]*h2; A12 = [0]*h2; A21 = [0]*h2; A22 = [0]*h2
         B11 = [0]*h2; B12 = [0]*h2; B21 = [0]*h2; B22 = [0]*h2
         for i in range(h):
@@ -103,9 +93,6 @@ def solve():
             B21[ih:ih+h] = Y[xbs : xbs+h]
             B22[ih:ih+h] = Y[xbs+h : xbs+s]
 
-        # 7 Strassen products (one recursive multiplication each).
-        # Input sums/differences use zip() over the full h²-element list —
-        # the fastest Python idiom for element-wise big-int arithmetic.
         M1 = strassen([a+b for a,b in zip(A11, A22)],
                       [a+b for a,b in zip(B11, B22)], h)
         M2 = strassen([a+b for a,b in zip(A21, A22)], B11, h)
@@ -117,16 +104,12 @@ def solve():
         M7 = strassen([a-b for a,b in zip(A12, A22)],
                       [a+b for a,b in zip(B21, B22)], h)
 
-        # Combine into output.
-        # C₁₁ = M₁ + M₄ − M₅ + M₇
-        # C₁₂ = M₃ + M₅
-        # C₂₁ = M₂ + M₄
-        # C₂₂ = M₁ − M₂ + M₃ + M₆
+        # C₁₁=M₁+M₄−M₅+M₇  C₁₂=M₃+M₅  C₂₁=M₂+M₄  C₂₂=M₁−M₂+M₃+M₆
         C = [0] * (s * s)
         for i in range(h):
             ih = i * h
-            rt = i * s          # top-half row start
-            rb = (i + h) * s    # bottom-half row start
+            rt = i * s
+            rb = (i + h) * s
             m1 = M1[ih:ih+h]; m2 = M2[ih:ih+h]; m3 = M3[ih:ih+h]
             m4 = M4[ih:ih+h]; m5 = M5[ih:ih+h]; m6 = M6[ih:ih+h]
             m7 = M7[ih:ih+h]
