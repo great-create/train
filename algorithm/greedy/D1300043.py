@@ -13,8 +13,7 @@ def main():
     del data
     INF = 1 << 62
 
-    succ = [0]*N
-    pred = [0]*N
+    succ = [0]*N; pred = [0]*N
     served = bytearray(N); served[0] = 1
     bd = [INF]*N; left = [-1]*N
 
@@ -31,8 +30,6 @@ def main():
             if a == 0: break
         bd[k] = best; left[k] = bl
 
-    # 貪婪插入：把尚未服務、可插入的客戶逐一放入；
-    # 每步挑「獎勵 / 增加時間」比值最高者，增時<=0(免費)者最優先。
     def greedy_fill(cur):
         active = [k for k in range(1, N) if not served[k]]
         for k in active: recompute(k)
@@ -71,48 +68,66 @@ def main():
                             if d < bd[k]: bd[k] = d; left[k] = m
         return cur
 
-    # Or-opt(1) 重定位：把單一已服務客戶移到更省時的位置，騰出時間以便再塞入更多客戶。
-    # 僅在所有新生邊(含橋接邊 pv->nv)皆為實際道路時才執行，保證路徑永遠合法。
-    def relocate_pass(cur):
+    # Or-opt(L)：把連續 L 個客戶整段(不反轉)搬到更省時的位置。
+    # 內部邊不變，只換 3 條邊(橋接 pv->nv、新左 a->h、新右 t_->b)，全部須為實路。
+    def oropt_pass(cur, L):
         improved = False
-        v = succ[0]
-        while v != 0:
-            nxt = succ[v]
-            pv = pred[v]; nv = succ[v]; tv = t[v]
+        h = succ[0]                     # 段頭
+        while h != 0:
+            # 取出長度 L 的段 h..tail
+            tail = h; ok = True
+            for _ in range(L-1):
+                tail = succ[tail]
+                if tail == 0: ok = False; break
+            nxt_after = succ[tail]
+            if not ok:
+                break
+            pv = pred[h]; nv = succ[tail]
             bridge = t[pv][nv]
-            if bridge or pv == nv:
-                saved = t[pv][v] + tv[nv] - bridge
+            if (bridge or pv == nv):
+                saved = t[pv][h] + t[tail][nv] - bridge
                 if saved > 0:
                     best_gain = 0; ba = -1; a = 0
+                    t_tail = t[tail]
                     while True:
                         b = succ[a]
-                        if a != v and b != v and not (a == pv and b == nv):
-                            ta = t[a]; tav = ta[v]
-                            if tav:
-                                tvb = tv[b]
-                                if tvb:
-                                    gain = saved - (tav + tvb - ta[b])
+                        # a,b 不可落在段內或原位
+                        inside = False
+                        x = h
+                        while True:
+                            if a == x or b == x: inside = True; break
+                            if x == tail: break
+                            x = succ[x]
+                        if not (inside or (a == pv and b == nv)):
+                            ta = t[a]; tah = ta[h]
+                            if tah:
+                                ttb = t_tail[b]
+                                if ttb:
+                                    gain = saved - (tah + ttb - ta[b])
                                     if gain > best_gain: best_gain = gain; ba = a
                         a = b
                         if a == 0: break
                     if ba >= 0:
+                        # 拆段
                         succ[pv] = nv; pred[nv] = pv
                         bb = succ[ba]
-                        succ[ba] = v; pred[v] = ba; succ[v] = bb; pred[bb] = v
+                        succ[ba] = h; pred[h] = ba
+                        succ[tail] = bb; pred[bb] = tail
                         cur -= best_gain; improved = True
-            v = nxt
+            h = nxt_after
         return cur, improved
 
     cur = greedy_fill(0)
-    # 重定位 + 再填充：迴圈會自然收斂（cur 嚴格遞減、服務數單調遞增），
-    # 迭代上限 1000 僅為防呆，實際大測資數次內即收斂。
     it = 0
     while N > 50 and it < 1000:
         it += 1
-        cur, imp = relocate_pass(cur)
+        imp_any = False
+        for L in (1, 2, 3):
+            cur, imp = oropt_pass(cur, L)
+            imp_any = imp_any or imp
         before = sum(served)
         cur = greedy_fill(cur)
-        if not imp and sum(served) == before: break
+        if not imp_any and sum(served) == before: break
 
     route = [0]; a = succ[0]
     while a != 0: route.append(a); a = succ[a]
